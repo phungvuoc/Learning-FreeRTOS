@@ -1,3 +1,8 @@
+// Part 4 challenge: Memory management
+/* One task reads from Serial, constructs a message buffer, and the second
+ * prints the message to the console.
+*/
+
 // use only core 1 for demo purposes
 #if CONFIG_FREERTOS_UNICORE
   static const BaseType_t app_cpu = 0;

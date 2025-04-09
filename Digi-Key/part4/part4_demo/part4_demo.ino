@@ -1,3 +1,4 @@
+// Part 4 demo: Memory management
 // use only core 1 for demo purposes
 #if CONFIG_FREERTOS_UNICORE
   static const BaseType_t app_cpu = 0;
