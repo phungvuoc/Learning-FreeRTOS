@@ -1,6 +1,7 @@
 // Part 4 challenge: Memory management
 /* One task reads from Serial, constructs a message buffer, and the second
  * prints the message to the console.
+ * This program uses a variable flag as a shared resource to synchronize between 2 tasks.
 */
 
 // use only core 1 for demo purposes
