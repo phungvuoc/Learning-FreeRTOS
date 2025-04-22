@@ -1,5 +1,5 @@
 // Part 7 - demo: counting Semaphore
-
+// TODO: can use Mutex to protect serial print
 // Use only core 1 for demo purposes
 #if CONFIG_FREERTOS_UNICORE
   static const BaseType_t app_cpu = 0;
