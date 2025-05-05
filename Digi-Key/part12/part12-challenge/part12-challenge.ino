@@ -1,5 +1,11 @@
 /**
- * Part 9 - Challenge - Interrupt
+ * Part 12 - challenge - multicore
+ Specifically, the timer ISR (for sampling the ADC) and the task that computes
+  the average of 10 samples should run on Core 0. The user interface task 
+  (the one that handles echoing characters to the serial terminal and 
+  responding to the “avg” command) should run on Core 1.
+
+ From Part 9 - challenge:
  You should implement a hardware timer in the ESP32 (here is a good article 
  showing how to do that) that samples from an ADC pin once every 100 ms. This 
  sampled data should be copied to a double buffer (you could also use a 
@@ -25,12 +31,9 @@
 // You'll likely need this on vanilla FreeRTOS
 //#include <semphr.h>
 
-// Use only core 1 for demo purposes
-#if CONFIG_FREERTOS_UNICORE
-  static const BaseType_t app_cpu = 0;
-#else
-  static const BaseType_t app_cpu = 1;
-#endif
+// Use both core
+static const BaseType_t pro_cpu = 0;
+static const BaseType_t app_cpu = 1;
 
 // Settings
 static const char command[] = "avg";              // Command
@@ -136,7 +139,7 @@ void IRAM_ATTR onTimer() {
 //*****************************************************************************
 // Tasks
 
-// Serial terminal task
+// Task B: Serial terminal task
 void doCLI(void *parameters) {
 
   Message rcv_msg;
@@ -194,11 +197,20 @@ void doCLI(void *parameters) {
   }
 }
 
-// Wait for semaphore and calculate average of ADC values
+// Task A: Wait for semaphore and calculate average of ADC values
 void calcAverage(void *parameters) {
 
   Message msg;
   float avg;
+
+  // %%% move creating timer here so it runs in core 0
+  // Create and start timer (frequence)
+  timer = timerBegin(timer_freq);
+  if (timer == NULL) return;
+  // Attach the interrupt handler (timer, function)
+  timerAttachInterrupt(timer, &onTimer);
+  // At what count should ISR trigger (timer, alarm_value, autoreload, reload_count)
+  timerAlarm(timer, timer_max_count, true, 0);
 
   // Loop forever, wait for semaphore, and print value
   while (1) {
@@ -282,15 +294,7 @@ void setup() {
                           NULL,
                           1,
                           &processing_task,
-                          app_cpu);
-
-  // Create and start timer (frequence)
-  timer = timerBegin(timer_freq);
-  if (timer == NULL) return;
-  // Attach the interrupt handler (timer, function)
-  timerAttachInterrupt(timer, &onTimer);
-  // At what count should ISR trigger (timer, alarm_value, autoreload, reload_count)
-  timerAlarm(timer, timer_max_count, true, 0);
+                          pro_cpu);
 
   // Delete "setup and loop" task
   vTaskDelete(NULL);
